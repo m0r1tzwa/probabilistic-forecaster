@@ -3,6 +3,7 @@ import torch
 import pyro
 from pyro.infer import SVI, Trace_ELBO, Predictive
 from pyro.infer.autoguide import AutoDiagonalNormal
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 import numpy as np
 import os
 import pathlib as Path
@@ -113,6 +114,23 @@ def evaluate(cfg: ProjectConfig):
 
     hist_mw = scaler.inverse_transform(x_test[0].reshape(-1, 1)).flatten()
     true_mw = scaler.inverse_transform(y_test[0].reshape(-1, 1)).flatten()
+
+    rmse = np.sqrt(mean_squared_error(true_mw, mean_mw))
+    mae = mean_absolute_error(true_mw, mean_mw)
+
+    lower_bound = mean_mw - 2 * total_std_mw
+    upper_bound = mean_mw + 2 * total_std_mw
+
+    inside_interval = ((true_mw >= lower_bound) & (true_mw <= upper_bound)).mean()
+
+    print("-" * 30)
+    print(f"Model Evaluation Results:")
+    print(f"1. Accuracy:")
+    print(f"   RMSE: {rmse:.2f} MW (deviation from target)")
+    print(f"   MAE:  {mae:.2f} MW")
+    print(f"2. Uncertainty Calibration:")
+    print(f"   95% Coverage: {inside_interval * 100:.2f}% (Target: ~95%)")
+    print("-" * 30)
 
     plot_uncertainty_decomposition(hist_mw, true_mw, mean_mw, epi_std_mw, total_std_mw)
 
