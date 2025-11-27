@@ -36,6 +36,7 @@ def train(cfg: ProjectConfig):
         output_size=cfg.train.horizon,
         num_layers=cfg.model.num_layers,
         dropout=cfg.model.dropout,
+        device=device,
     ).to(device)
     guide = AutoDiagonalNormal(model)
 
@@ -90,7 +91,7 @@ def evaluate(cfg: ProjectConfig):
     )
 
     model = BayesianLSTM(
-        cfg.model.input_size, cfg.model.hidden_size, cfg.train.horizon
+        cfg.model.input_size, cfg.model.hidden_size, cfg.train.horizon, device=device
     ).to(device)
 
     model.load_state_dict(torch.load(cfg.model_save_path, map_location=device))
@@ -124,8 +125,8 @@ def evaluate(cfg: ProjectConfig):
     epi_std_mw = np.sqrt(epistemic_var).flatten() * scale
     total_std_mw = np.sqrt(total_var).flatten() * scale
 
-    hist_mw = scaler.inverse_transform(x_test[0].reshape(-1, 1)).flatten()
-    true_mw = scaler.inverse_transform(y_test[0].reshape(-1, 1)).flatten()
+    hist_mw = scaler.inverse_transform(x_test[0].cpu().reshape(-1, 1)).flatten()
+    true_mw = scaler.inverse_transform(y_test[0].cpu().reshape(-1, 1)).flatten()
 
     rmse = np.sqrt(mean_squared_error(true_mw, mean_mw))
     mae = mean_absolute_error(true_mw, mean_mw)

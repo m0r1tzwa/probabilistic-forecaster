@@ -11,9 +11,9 @@ class ModelConfig:
 
 @dataclass
 class TrainingConfig:
-    batch_size: int = 32
+    batch_size: int = 1024
     learning_rate: float = 0.001
-    num_epochs: int = 20
+    num_epochs: int = 200
     look_back: int = 48
     horizon: int = 24
     train_split: float = 0.7

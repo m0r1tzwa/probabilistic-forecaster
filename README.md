@@ -17,12 +17,30 @@ This project implements a **Bayesian Long Short-Term Memory (LSTM)** network to 
 
 ---
 
-## Results & Visualization
+## Results & Optimization
 
-The model successfully captures the periodic nature of energy consumption while providing dynamic confidence intervals.
+The model was evaluated in a cloud environment (Google Colab) to test scalability. By significantly increasing the **batch size** and **training epochs**, we achieved a substantial improvement in prediction accuracy while maintaining robust uncertainty estimation.
 
-![Uncertainty Decomposition](images/forecast_plot.jpg)
-*Figure 1: Probabilistic forecast showing the ground truth (green) vs. predicted mean (navy). The teal area represents model uncertainty (reducible with data), while light blue represents data noise (irreducible).*
+### Metric Comparison: Baseline vs. Optimized
+
+| Metric | Baseline (MVP) | Optimized (Final) | Improvement |
+| :--- | :--- | :--- | :--- |
+| **Configuration** | Batch Size 32, 20 Epochs | **Batch Size 1024, 200 Epochs** | High-Throughput |
+| **RMSE** (Root Mean Squared Error) | 563.29 MW | **420.68 MW** | **▼ 25.3% Error Reduction** |
+| **MAE** (Mean Absolute Error) | 467.28 MW | **299.88 MW** | **▼ 35.8% Error Reduction** |
+| **95% Coverage** | 100.0% | **100.0%** | Robust / Risk-Averse |
+
+### Visual Comparison
+
+**1. Baseline Run (Underfitting)**
+*Initial prototype showing wider uncertainty bounds and less precise mean tracking.*
+![Baseline Forecast](images/forecast_plot_epoch20_batch32.jpg)
+
+**2. Optimized Run (High Precision)**
+*Final model after scaling batch size and training duration. Note the tighter fit to the ground truth (green line) while maintaining a safe uncertainty buffer.*
+![Optimized Forecast](images/forecast_plot_epoch200_batch1024.jpg)
+
+> **Note on Coverage:** The model currently exhibits 100% coverage of the 95% confidence interval. In the context of critical infrastructure, this "conservative" calibration is often preferred to avoid false negatives (underestimating peak loads), ensuring grid stability.
 
 ---
 

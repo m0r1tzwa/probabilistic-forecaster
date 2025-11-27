@@ -17,9 +17,17 @@ class BayesianLSTM(PyroModule):
     """
 
     def __init__(
-        self, input_size: int, hidden_size: int, output_size: int, num_layers: int = 1, dropout: float = 0.0
+        self,
+        input_size: int,
+        hidden_size: int,
+        output_size: int,
+        num_layers: int = 1,
+        dropout: float = 0.0,
+        device: torch.device = None,
     ):
         super().__init__()
+        if device is None:
+            device = torch.device("cpu")
         self.output_size = output_size
         self.lstm = nn.LSTM(
             input_size=input_size,
@@ -31,20 +39,27 @@ class BayesianLSTM(PyroModule):
 
         # Probabilistic Output Heads (Bayesian Regression)
         # Using Normal priors for weights and biases
+        prior_loc = torch.tensor(0.0, device=device)
+        prior_scale = torch.tensor(1.0, device=device)
+
         self.linear_mu = PyroModule[nn.Linear](hidden_size, output_size)
         self.linear_mu.weight = PyroSample(
-            dist.Normal(0.0, 1.0).expand([output_size, hidden_size]).to_event(2)
+            dist.Normal(prior_loc, prior_scale)
+            .expand([output_size, hidden_size])
+            .to_event(2)
         )
         self.linear_mu.bias = PyroSample(
-            dist.Normal(0.0, 1.0).expand([output_size]).to_event(1)
+            dist.Normal(prior_loc, prior_scale).expand([output_size]).to_event(1)
         )
 
         self.linear_sigma = PyroModule[nn.Linear](hidden_size, output_size)
         self.linear_sigma.weight = PyroSample(
-            dist.Normal(0.0, 1.0).expand([output_size, hidden_size]).to_event(2)
+            dist.Normal(prior_loc, prior_scale)
+            .expand([output_size, hidden_size])
+            .to_event(2)
         )
         self.linear_sigma.bias = PyroSample(
-            dist.Normal(0.0, 1.0).expand([output_size]).to_event(1)
+            dist.Normal(prior_loc, prior_scale).expand([output_size]).to_event(1)
         )
 
     def forward(self, x: torch.Tensor, y: torch.Tensor = None) -> torch.Tensor:

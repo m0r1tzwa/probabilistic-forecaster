@@ -83,8 +83,20 @@ def get_data_loaders(
     )
 
     # 6. Create DataLoaders
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=2,
+        pin_memory=True,
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=2,
+        pin_memory=True,
+    )
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     print(f"Data loaded: {len(X_train)} training samples.")
