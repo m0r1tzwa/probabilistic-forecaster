@@ -18,6 +18,7 @@ def train(cfg: ProjectConfig):
     pyro.set_rng_seed(cfg.train.seed)
     torch.manual_seed(cfg.train.seed)
     pyro.clear_param_store()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     train_loader, val_loader, _, _ = get_data_loaders(
         filepath=cfg.data_path,
@@ -35,7 +36,7 @@ def train(cfg: ProjectConfig):
         output_size=cfg.train.horizon,
         num_layers=cfg.model.num_layers,
         dropout=cfg.model.dropout,
-    )
+    ).to(device)
     guide = AutoDiagonalNormal(model)
 
     optimizer = pyro.optim.ClippedAdam(
@@ -49,13 +50,19 @@ def train(cfg: ProjectConfig):
     os.makedirs(os.path.dirname(cfg.param_save_path), exist_ok=True)
 
     for epoch in range(cfg.train.num_epochs):
-        train_loss = sum(svi.step(x, y) for x, y in train_loader) / len(
-            train_loader.dataset
-        )
+        train_loss = 0.0
+        for x, y in train_loader:
+            x = x.to(device)
+            y = y.to(device)
+            train_loss += svi.step(x, y)
+        train_loss = train_loss / len(train_loader.dataset)
 
-        val_loss = sum(svi.evaluate_loss(x, y) for x, y in val_loader) / len(
-            val_loader.dataset
-        )
+        val_loss = 0.0
+        for x, y in val_loader:
+            x = x.to(device)
+            y = y.to(device)
+            val_loss += svi.evaluate_loss(x, y)
+        val_loss = val_loss / len(val_loader.dataset)
 
         if (epoch + 1) % 5 == 0:
             print(
@@ -70,6 +77,7 @@ def train(cfg: ProjectConfig):
 
 def evaluate(cfg: ProjectConfig):
     pyro.clear_param_store()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     _, _, test_loader, scaler = get_data_loaders(
         cfg.data_path,
@@ -81,8 +89,11 @@ def evaluate(cfg: ProjectConfig):
         val_split=cfg.train.val_split,
     )
 
-    model = BayesianLSTM(cfg.model.input_size, cfg.model.hidden_size, cfg.train.horizon)
-    model.load_state_dict(torch.load(cfg.model_save_path))
+    model = BayesianLSTM(
+        cfg.model.input_size, cfg.model.hidden_size, cfg.train.horizon
+    ).to(device)
+
+    model.load_state_dict(torch.load(cfg.model_save_path, map_location=device))
 
     guide = AutoDiagonalNormal(pyro.poutine.block(model, hide=["obs"]))
 
@@ -90,6 +101,7 @@ def evaluate(cfg: ProjectConfig):
     pyro.get_param_store().set_state(saved_params)
 
     x_test, y_test = next(iter(test_loader))
+    x_test = x_test.to(device)
 
     predictive = Predictive(
         model,
@@ -132,6 +144,7 @@ def evaluate(cfg: ProjectConfig):
     print(f"   95% Coverage: {inside_interval * 100:.2f}% (Target: ~95%)")
     print("-" * 30)
 
+    x_test = x_test.cpu()
     plot_uncertainty_decomposition(hist_mw, true_mw, mean_mw, epi_std_mw, total_std_mw)
 
 
