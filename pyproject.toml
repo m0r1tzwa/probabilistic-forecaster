@@ -1,0 +1,19 @@
+[project]
+name = "probabilistic-forecaster"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "matplotlib>=3.10.7",
+    "numpy>=2.3.5",
+    "pandas>=2.3.3",
+    "pyro-ppl>=1.9.1",
+    "scikit-learn>=1.7.2",
+    "torch>=2.9.1",
+]
+
+[tool.uv.workspace]
+members = [
+    "env",
+]
