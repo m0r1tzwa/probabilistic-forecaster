@@ -75,7 +75,7 @@ uv run main.py --mode eval
 ```text
 probabilistic-forecaster/
 ├── data/
-│   └── AEP_hourly.csv      # Time-series data
+│   └── AEP_hourly.csv      # Time-series data(Download source below)
 ├── src/
 │   ├── config.py           # Configuration via Dataclasses
 │   ├── data_loader.py      # Preprocessing & Windowing logic
@@ -86,6 +86,11 @@ probabilistic-forecaster/
 ├── pyproject.toml          # Project dependencies
 └── uv.lock                 # Exact dependency tree
 ```
+
+### Data Setup
+Note: The dataset is excluded from the repository for efficiency.
+1. Download the `AEP_hourly.csv` file from [Kaggle (PJM Hourly Energy Consumption Data)](https://www.kaggle.com/datasets/robikscube/hourly-energy-consumption).
+2. Place the file in the `data/` directory.
 
 ## Contact
 
